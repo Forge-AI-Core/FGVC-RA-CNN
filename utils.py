@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 
 def save_img(x, path, annotation=''):
     fig = plt.gcf()  # generate outputs

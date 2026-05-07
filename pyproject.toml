@@ -1,0 +1,23 @@
+[project]
+name = "fgvc-ra-cnn"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "datasets>=4.8.5",
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.4",
+    "tensorboard>=2.20.0",
+    "tensorflow>=2.21.0",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "test_uv",
+]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu121"

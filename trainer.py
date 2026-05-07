@@ -14,8 +14,7 @@ from torch.autograd import Variable
 import torch.utils.data as data
 import torch.nn.functional as F
 
-from data import CUB200_loader
-import cv2
+from data.CUB_loader import CUB200_loader
 
 from models import RACNN, pairwise_ranking_loss, multitask_loss
 from utils import save_img
@@ -47,6 +46,9 @@ opt2 = optim.SGD(apn_params, lr = args.lr, momentum = 0.9, weight_decay = 0.0005
 #    param.register_hook(print)
 
 def train():
+    os.makedirs('ckpt', exist_ok=True)
+    os.makedirs('samples', exist_ok=True)
+    os.makedirs('visual', exist_ok=True)
     net.train()
 
     conf_loss = 0
@@ -55,10 +57,10 @@ def train():
     print(" [*] Loading dataset...")
     batch_iterator = None
     
-    trainset = CUB200_loader(os.getcwd() + '/data/CUB_200_2011', split = 'train')
+    trainset = CUB200_loader(os.getcwd() + '/data/cub-200-2011', split = 'train')
     trainloader = data.DataLoader(trainset, batch_size = 4,
             shuffle = True, collate_fn = trainset.CUB_collate, num_workers = 4)
-    testset = CUB200_loader(os.getcwd() + '/data/CUB_200_2011', split = 'test')
+    testset = CUB200_loader(os.getcwd() + '/data/cub-200-2011', split = 'test')
     testloader = data.DataLoader(testset, batch_size = 4,
             shuffle = False, collate_fn = testset.CUB_collate, num_workers = 4)
     test_sample, _ = next(iter(testloader))
@@ -193,9 +195,9 @@ def train():
         _, _, _, crops = net(test_sample)
         x1, x2 = crops[0].data, crops[1].data
         # visualize cropped inputs
-        save_img(x1, path=f'samples/iter_{iteration}@2x.jpg', annotation=f'loss = {avg_loss:.7f}, step = {iteration}')
-        save_img(x2, path=f'samples/iter_{iteration}@4x.jpg', annotation=f'loss = {avg_loss:.7f}, step = {iteration}')
-        torch.save(net.state_dict, 'ckpt/RACNN_vgg_CUB200_iter%d.pth'%iteration)
+        save_img(x1, path=f'samples/iter_{iteration}@2x.jpg', annotation=f'loss = {new_cls_loss.item():.7f}, step = {iteration}')
+        save_img(x2, path=f'samples/iter_{iteration}@4x.jpg', annotation=f'loss = {new_cls_loss.item():.7f}, step = {iteration}')
+        torch.save(net.state_dict(), 'ckpt/RACNN_vgg_CUB200_iter%d.pth'%iteration)
 
 def pretrainAPN(trainset, trainloader):
     epoch_size = len(trainset) // 4
