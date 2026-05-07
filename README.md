@@ -16,6 +16,9 @@ uv sync
 uv run python trainer.py
 ```
 
+---
+원본 소스코드 제작자의 리드미
+---
 ## 진행 상황 (TODO)
 - [x] 네트워크 구축
 - [ ] 인자(Arguments) 리팩토링
