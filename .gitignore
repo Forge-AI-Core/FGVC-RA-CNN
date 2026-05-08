@@ -1,15 +1,29 @@
-data/
-visual
-ckpt
-results
-examples
+# Environments
+.venv/
+.env
+
+# Pycache
+__pycache__/
 *.pyc
-*.png
-*.jpg
-*.jpeg
-*.xlsx
-*.zip
-*.ckpt
-*.csv
-*.pkl
+*.pyo
+*.pyd
+
+# Data & Checkpoints
+data/cub-200-2011/
+ckpt/
+samples/
+visual/
+scratch/
+test_uv/
+
+# Jupyter
+*.ipynb_checkpoints/
+
+# IDE & OS
+.vscode/
+.idea/
 *.swp
+.DS_Store
+
+# pyright
+pyrightconfig.json
