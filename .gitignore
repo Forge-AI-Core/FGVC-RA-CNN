@@ -27,3 +27,6 @@ test_uv/
 
 # pyright
 pyrightconfig.json
+
+# Keys
+maskter_key.md
