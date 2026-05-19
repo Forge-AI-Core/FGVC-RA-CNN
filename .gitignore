@@ -1,32 +1,52 @@
-# Environments
+# Python & Environments
+__pycache__/
+*.py[cod]
+*$py.class
 .venv/
+venv/
+ENV/
+env/
 .env
 
-# Pycache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# Jupyter Note
+.ipynb_checkpoints/
 
-# Data & Checkpoints
-data/cub-200-2011/
-ckpt/
-samples/
-visual/
-scratch/
-test_uv/
+# PyTorch & Deep Learning
+*.pth
+*.pt
+*.ckpt
+*.weights
+*.onnx
+# TensorBoard logs (if used later)
+runs/
+# Weights & Biases logs (if used later)
+wandb/
 
-# Jupyter
-*.ipynb_checkpoints/
+# Datasets & Outputs
+# CUB-200 데이터셋 등 용량이 큰 데이터 폴더
+data
+# 학습 결과나 이미지가 저장될 폴더
+outputs/
+# 로그 파일들
+*.log
 
-# IDE & OS
+# OS & Editor
+.DS_Store
 .vscode/
 .idea/
-*.swp
-.DS_Store
 
-# pyright
-pyrightconfig.json
+# 공부 기록용 코드
+study_code/
 
-# Keys
-maskter_key.md
+# 모델 가중치 폴더
+models
+
+# 연습장
+design_notes
+
+# 임시
+dinov3
+wget-log
+
+# 결과물
+results

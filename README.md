@@ -1,56 +1,97 @@
-# RACNN-pytorch
-이 프로젝트는 RA-CNN(Recurrent Attention Convolutional Neural Network)을 PyTorch로 구현한 서드파티 저장소입니다. 현재 [논문](https://www.microsoft.com/en-us/research/wp-content/uploads/2017/07/Look-Closer-to-See-Better-Recurrent-Attention-Convolutional-Neural-Network-for-Fine-grained-Image-Recognition.pdf)에 명시된 성능을 재현하기 위해 작업 중입니다.
+# RA-CNN (Recurrent Attention Convolutional Neural Network)
 
-CUB200 데이터셋은 [이 페이지](http://www.vision.caltech.edu/visipedia-data/CUB-200-2011/CUB_200_2011.tgz)에서 다운로드할 수 있으며, 다음 명령어로 `data/` 폴더에 압축을 풀 수 있습니다: `tar -xvf CUB_200_2011.tgz -C data/`
+이 프로젝트는 **Fine-grained Visual Classification (FGVC)** 을 위한 Attention 기반 Convolutional Neural Network (CNN) 아키텍처를 구현한 코드입니다.  
+본 구현은 논문 **"Learning Deep Features for Discriminative Localization (ICLR 2018)"** 의 핵심 메커니즘을 기반으로 하고 있습니다.
 
-## 요구 사항
-- [uv](https://github.com/astral-sh/uv) (매우 빠른 Python 패키지 관리자)
-- Python 3.12+ (uv를 통해 관리됨)
+---
 
-## 설정 및 학습 방법
-1. 이 저장소를 클론합니다.
-2. Hugging Face `datasets` 라이브러리를 사용하여 CUB-200-2011 데이터셋을 다운로드합니다. 데이터셋은 `./data/cub-200-2011` 경로에 Arrow 형식으로 위치해야 합니다.
-3. `uv`를 사용하여 의존성을 설치하고 학습을 실행합니다:
-```bash
-uv sync
-uv run python trainer.py
+## 핵심 모듈 구성
+본 아키텍처는 세 가지 스케일(Scale)을 유기적으로 제어하기 위해 총 5개의 모듈로 구성됩니다.
+
+1. **`classifier1`**: Scale 1의 기본 이미지 분류기 (Vanilla CNN)
+2. **`apn1`**: Scale 1 Feature Map에서 핵심 영역을 감지하여 Scale 2로 크롭 및 스케일링하는 Attention Proposal Network
+3. **`classifier2`**: Scale 2(크롭된 국소 영역)의 분류기
+4. **`apn2`**: Scale 2 Feature Map에서 더욱 미세한 영역을 감지하여 Scale 3로 크롭 및 스케일링하는 APN
+5. **`classifier3`**: Scale 3(더욱 미세한 국소 영역)의 분류기
+
+---
+
+## 학습 및 앙상블 전략
+* **단계별 독립 학습 (Stage-wise Training)**: 
+  모듈은 한 번에 하나씩 순차적으로 학습(Stage 1 ~ Stage 5)되며, 특정 모듈이 학습되는 동안 나머지 모듈의 가중치는 완전히 동결(Freezing)됩니다.
+* **최종 정렬 및 공동 최적화 (Stage 6)**: 
+  마지막 Stage 6에서는 모든 모듈의 동결을 해제하고 전체 네트워크를 동시에 미세 조정(Fine-tuning)합니다.
+* **단순 합 기반 앙상블 (Ensemble)**: 
+  세 가지 스케일의 분류 로짓(Logits)을 합산하여 최종 예측을 수행하는 간소화된 앙상블 로직을 채택하였습니다.
+
+---
+
+## 디렉토리 구조
+```text
+├── README.md
+├── data
+│   └── benchmark-3
+│       ├── CUB-200-2011
+│       ├── FGVC-Aircraft
+│       └── Stanford-Cars
+├── hyper-parameters.yaml
+├── simple_tester.py    
+├── trainer.py
+└── trainer_pipeline
+    ├── data_loaders.py
+    ├── model_base_architectures/
+    ├── racnn_stage1.py
+    ├── racnn_stage2.py
+    ├── racnn_stage3.py
+    ├── racnn_stage4.py
+    ├── racnn_stage5.py
+    └── racnn_stage6_final.py
 ```
-
-## 진행 상황 (TODO)
-- [x] 네트워크 구축
-- [ ] 인자(Arguments) 리팩토링
-- [ ] APN 사전 학습 구현
-- [ ] APN과 ConvNet/Classifier 간의 교차 학습 구현
-- [ ] 성능 재현 및 README.md 업데이트
-- [ ] 샘플 시각화
-  - [이 구현체](https://github.com/klrc/RACNN-pytorch)를 참고함
-- [ ] 성능 향상을 위한 새로운 접근 방식 추가
-
-## 현재 이슈
-- APN 사전 학습에 대한 구체적인 디테일 부족
-- Rankloss가 감소하지 않음 (사전 학습의 부재 또는 버그 가능성)
-
-## 실험 결과
-현재 최고 성능은 APN 사전 학습 없이 Scale 1에서 **71.68%**입니다. 이는 일반적인 VGG19만 사용하는 것보다 낮은 수치입니다.
 
 ## 사용법
-학습을 위해 다음 명령어를 사용하세요:
+
+### 0. 환경 설정 및 의존성 설치
+프로젝트 루트 폴더에서 `uv`를 활용해 가상환경 및 의존성을 정렬합니다.
 ```bash
-$ uv run python trainer.py
-```
-또는
-```bash
-$ uv run bash train.sh
+uv sync
 ```
 
-현재 CUDA가 가능한 디바이스만 지원합니다.
+### 1. 모델 학습 (`trainer.py`)
+각 스테이지(Stage 1 ~ 6)를 순차적으로 실행하여 학습을 진행하고, 완성된 최적 가중치를 `./models/{dataset_name}/` 경로에 차례대로 저장합니다.
+* 하이퍼파라미터는 `hyper-parameters.yaml` 파일에서 통합 관리됩니다.
+* 실행 시 대화형 입력 창이 뜨며 학습하고자 하는 데이터셋 명을 입력해야 합니다.
+> [!NOTE]
+> 데이터 경로 관련 오류가 발생할 경우, `trainer_pipeline/data_loaders.py` 내의 경로 설정을 로컬 환경에 맞게 확인해 주시기 바랍니다.
 
-학습 과정을 모니터링하려면 다음을 실행하세요:
+* 실행 코드
 ```bash
-$ uv run tensorboard --logdir='visual/' --port=6666
+uv run python3 -m trainer
 ```
-그 후 웹 브라우저에서 `localhost:6666`에 접속하여 Loss, Accuracy 등을 확인할 수 있습니다.
 
-## 참고 문헌
-- [원문 코드 (Caffe)](https://github.com/Jianlong-Fu/Recurrent-Attention-CNN)
-- [다른 PyTorch 구현체](https://github.com/Charleo85/DeepCar) (Attention Crop 코드를 참고함)
+### 2. 시각적 테스트 및 검증 (`simple_tester.py`)
+학습이 완료된 가중치를 불러와 테스트 데이터셋의 예측 지표(Accuracy, Precision, Recall, F1)를 출력하고, 랜덤으로 선택된 10개의 샘플에 대한 스케일별 크롭 이미지 결과를 시각적으로 저장합니다.
+* 결과물(지표 및 크롭 이미지)은 `results/{dataset_name}/` 디렉토리에 저장됩니다.
+
+* 실행 코드
+```bash
+uv run python3 simple_tester.py
+```
+
+## results
+
+* 측정 지표
+<img width="1500" height="1000" alt="stage6_CUB-200-2011_learning_curves" src="https://github.com/user-attachments/assets/4f3c8ab5-1c9e-467b-97fd-20567962866f" />
+
+* full_image
+<img width="1692" height="678" alt="scale1_full" src="https://github.com/user-attachments/assets/6b2034ed-035a-42be-a418-210a7cea0304" />
+
+* scale1_image
+<img width="1692" height="678" alt="scale2_crop" src="https://github.com/user-attachments/assets/be80999e-d458-4c9e-9431-9c47d3fa9961" />
+
+* scale2_image
+<img width="1692" height="678" alt="scale3_crop" src="https://github.com/user-attachments/assets/45198f64-6384-48b0-8f8e-28a3e2756257" />
+
+
+
+
+
