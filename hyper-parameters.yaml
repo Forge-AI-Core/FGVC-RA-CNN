@@ -2,8 +2,8 @@
 # 하이퍼 파라미터 config
 #######################
 training:
-    BATCH_SIZE: 16
+    BATCH_SIZE: 32
     NUM_EPOCHS: 50
-    LEARNING_RATE: 5e-6
-    WEIGHT_DECAY: 1e-6
-    EARLY_STOP_PATIENCE: 10
+    LEARNING_RATE: 1e-5
+    WEIGHT_DECAY: 5e-3
+    EARLY_STOP_PATIENCE: 5

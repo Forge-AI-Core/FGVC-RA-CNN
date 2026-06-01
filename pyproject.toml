@@ -26,6 +26,27 @@ url = "https://download.pytorch.org/whl/cu121"
 explicit = true
 
 [tool.uv.sources]
-torch = [{ index = "pytorch-cu121", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
-torchvision = [{ index = "pytorch-cu121", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
-torchaudio = [{ index = "pytorch-cu121", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
+torch = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchaudio = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+[tool.pyright]
+exclude = ["**/node_modules", "**/__pycache__", "data", ".venv"]
+venvPath = "."
+venv = ".venv"
+reportMissingTypeStubs = "none"
+
+[tool.basedpyright]
+exclude = ["**/node_modules", "**/__pycache__", "data", ".venv"]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "standard"
+
+[tool.basedpyright.analysis.diagnosticSeverityOverrides]
+reportMissingTypeStubs = "none"
