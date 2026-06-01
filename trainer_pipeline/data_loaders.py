@@ -349,20 +349,20 @@ def get_dataloaders(
         dataset=train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=0,
         pin_memory=True,
     )
     val_loader = DataLoader(
         dataset=val_dataset,
         batch_size=batch_size,
-        num_workers=4,
+        num_workers=0,
         pin_memory=True,
     )
     val_loader_shuffle = DataLoader(
         dataset=val_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=0,
         pin_memory=True,
     )
 
