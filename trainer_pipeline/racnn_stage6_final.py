@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch import nn, optim
 from tqdm import tqdm
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 
 from trainer_pipeline.data_loaders import get_dataloaders, get_num_classes
@@ -275,6 +275,96 @@ def visualize_results(history: dict[str, list[float]], dataset_name: str) -> Non
     plt.close()
 
 
+def evaluate_and_save_metrics(
+    model: nn.Module,
+    val_loader: DataLoader,
+    device: str,
+    dataset_name: str,
+    num_classes: int,
+) -> None:
+    """최종 베스트 모델에 대해 클래스별 지표 및 혼동 행렬을 계산하여 출력하고 저장합니다."""
+    import numpy as np
+
+    model.eval()
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for batch in tqdm(val_loader, desc="Final Evaluation"):
+            images = batch["image"].to(device)
+            labels = batch["label"].to(device)
+
+            with torch.autocast(device_type=device, dtype=torch.bfloat16):
+                logits1, logits2, logits3, _, _ = model(images)
+                ensemble_logits = (logits1 + logits2 + logits3) / 3.0
+
+            _, predictions = ensemble_logits.max(dim=1)
+            all_preds.extend(predictions.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+    # 클래스명 추출
+    if hasattr(val_loader.dataset, "classes"):
+        class_names = val_loader.dataset.classes
+    else:
+        class_names = [f"Class {i}" for i in range(num_classes)]
+
+    # 1. classification report (클래스별 프리시전, 리콜, 종합 어큐러시 포함)
+    report_str = classification_report(
+        all_labels, all_preds, target_names=class_names, zero_division=0
+    )
+
+    print("\n" + "=" * 60)
+    print("              [최종 검증 셋 평가 보고서]")
+    print("=" * 60)
+    print(report_str)
+    print("=" * 60 + "\n")
+
+    # 결과 폴더 생성
+    results_dir = Path(f"results/{dataset_name}")
+    results_dir.mkdir(parents=True, exist_ok=True)
+
+    # 보고서 텍스트 파일 저장
+    report_path = results_dir / "val_metrics_report.txt"
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("=" * 60 + "\n")
+        f.write(f" 데이터셋: {dataset_name}\n")
+        f.write("=" * 60 + "\n\n")
+        f.write(report_str)
+    print(f"📊 상세 메트릭 보고서가 저장되었습니다: {report_path}")
+
+    # 2. Confusion Matrix 계산 및 시각화
+    cm = confusion_matrix(all_labels, all_preds)
+
+    plt.figure(figsize=(10, 8))
+    plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+    plt.title(f"Confusion Matrix ({dataset_name})", fontsize=16)
+    plt.colorbar()
+
+    tick_marks = np.arange(len(class_names))
+    plt.xticks(tick_marks, class_names, rotation=45, ha="right")
+    plt.yticks(tick_marks, class_names)
+
+    # 셀 내부에 숫자 텍스트 표시
+    thresh = cm.max() / 2.0
+    for i, j in np.ndindex(cm.shape):
+        plt.text(
+            j,
+            i,
+            format(cm[i, j], "d"),
+            horizontalalignment="center",
+            color="white" if cm[i, j] > thresh else "black",
+        )
+
+    plt.ylabel("True Label", fontsize=12)
+    plt.xlabel("Predicted Label", fontsize=12)
+    plt.tight_layout()
+
+    cm_path = results_dir / "val_confusion_matrix.png"
+    plt.savefig(cm_path, dpi=300)
+    plt.close()
+    print(f"📸 혼동 행렬 시각화 이미지가 저장되었습니다: {cm_path}\n")
+
+
 ####################
 # 하이퍼 파라미터 로드
 ####################
@@ -380,6 +470,13 @@ def get_racnn(dataset_name: str, hyperparameter_path: Path) -> None:
 
     # 학습 완료 후 시각화 함수 호출
     visualize_results(history, dataset_name)
+
+    # 베스트 가중치를 로드하여 최종 검증 보고서 및 혼동 행렬 생성
+    best_model_path = Path(f"models/{dataset_name}/{dataset_name}_best_on_stage6.pth")
+    if best_model_path.exists():
+        print("\n[평가] 베스트 모델의 가중치를 불러와 최종 평가(클래스별 지표 및 혼동 행렬)를 시작합니다...")
+        model.load_state_dict(torch.load(best_model_path, map_location=device, weights_only=True))
+        evaluate_and_save_metrics(model, val_loader, device, dataset_name, num_classes)
 
 
 if __name__ == "__main__":

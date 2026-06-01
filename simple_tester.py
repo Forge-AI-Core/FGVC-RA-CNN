@@ -7,7 +7,8 @@ import torch
 from torch import nn
 
 from tqdm import tqdm
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
 
 from trainer_pipeline.model_base_architectures.vanilla_cnn import VanillaCNN
 from trainer_pipeline.model_base_architectures.apn import APN
@@ -51,7 +52,7 @@ def get_model(model_path: Path, num_classes: int) -> nn.Module:
     return model
 
 
-def test_final_model(model, test_loader, criterion, device):
+def test_final_model(model, test_loader, criterion, device, dataset_name):
     """최종 앙상블 모델의 테스트 코드 (전체 평가지표 계산)"""
     model.eval()
 
@@ -86,6 +87,63 @@ def test_final_model(model, test_loader, criterion, device):
     precision = precision_score(all_labels, all_preds, average='macro', zero_division=0)
     recall = recall_score(all_labels, all_preds, average='macro', zero_division=0)
     f1 = f1_score(all_labels, all_preds, average='macro', zero_division=0)
+
+    # 클래스명 추출
+    if hasattr(test_loader.dataset, 'classes'):
+        class_names = test_loader.dataset.classes
+    else:
+        import numpy as np
+        num_classes = len(np.unique(all_labels))
+        class_names = [f"Class {i}" for i in range(num_classes)]
+
+    # 1. classification report (클래스별 프리시전, 리콜, 종합 어큐러시 포함)
+    report_str = classification_report(all_labels, all_preds, target_names=class_names, zero_division=0)
+
+    print("\n" + "="*60)
+    print("              [최종 테스트 셋 상세 평가 보고서]")
+    print("="*60)
+    print(report_str)
+    print("="*60 + "\n")
+
+    # 결과 폴더 생성 및 저장
+    results_dir = Path(f"results/{dataset_name}")
+    results_dir.mkdir(parents=True, exist_ok=True)
+
+    report_path = results_dir / "test_metrics_report.txt"
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("="*60 + "\n")
+        f.write(f" 데이터셋: {dataset_name}\n")
+        f.write("="*60 + "\n\n")
+        f.write(report_str)
+    print(f"📊 상세 메트릭 보고서가 저장되었습니다: {report_path}")
+
+    # 2. Confusion Matrix 계산 및 시각화
+    cm = confusion_matrix(all_labels, all_preds)
+    import numpy as np
+
+    plt.figure(figsize=(10, 8))
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title(f"Confusion Matrix ({dataset_name})", fontsize=16)
+    plt.colorbar()
+
+    tick_marks = np.arange(len(class_names))
+    plt.xticks(tick_marks, class_names, rotation=45, ha='right')
+    plt.yticks(tick_marks, class_names)
+
+    thresh = cm.max() / 2.
+    for i, j in np.ndindex(cm.shape):
+        plt.text(j, i, format(cm[i, j], 'd'),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True Label', fontsize=12)
+    plt.xlabel('Predicted Label', fontsize=12)
+    plt.tight_layout()
+
+    cm_path = results_dir / "test_confusion_matrix.png"
+    plt.savefig(cm_path, dpi=300)
+    plt.close()
+    print(f"📸 혼동 행렬 시각화 이미지가 저장되었습니다: {cm_path}\n")
     
     return avg_loss, acc, precision, recall, f1
 
@@ -118,7 +176,7 @@ def main(dataset_name: str):
     _, test_loader, _ = get_dataloaders(dataset_name=dataset_name, batch_size=32)
     criterion = nn.CrossEntropyLoss()
     
-    _, acc, p, r, f1 = test_final_model(model, test_loader, criterion, device)
+    _, acc, p, r, f1 = test_final_model(model, test_loader, criterion, device, dataset_name)
     
     print("\n" + "="*50)
     print(f"       {dataset_name.upper()} 전체 테스트셋 최종 평가 결과 (Ensemble)")
