@@ -45,7 +45,7 @@ class Stage2Model(nn.Module):
 
         self.classifier1 = classifier1
         self.feature_extractor1 = classifier1.features
-        self.apn = APN(in_features=512*10*10)
+        self.apn = APN(in_features=512*7*7)
         self.classifier2 = classifier2
         
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:

@@ -52,12 +52,12 @@ def prepare_modules(
     classifier3.load_state_dict(state_dict=c2_weights)
 
     # APN 1
-    apn1 = APN(in_features=512*10*10)
+    apn1 = APN(in_features=512*7*7)
     apn1_weights = {k.replace('apn.', ''): v for k, v in state_dict_apn1.items() if k.startswith('apn.')}
     apn1.load_state_dict(apn1_weights)
 
     # APN 2
-    apn2 = APN(in_features=512*10*10)
+    apn2 = APN(in_features=512*7*7)
 
     return classifier1, classifier2, classifier3, apn1, apn2
 

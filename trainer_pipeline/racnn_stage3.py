@@ -38,7 +38,7 @@ def prepare_modules(classifier2_path: Path, apn1_path: Path, num_classes: int) -
     classifier2.load_state_dict(state_dict=state_dict_c1)
 
     # APN 1
-    apn1 = APN(in_features=512*10*10)
+    apn1 = APN(in_features=512*7*7)
     # 파이토치의 state_dict는 {"레이어 이름": "가중치 텐서"} 형태의 파이썬 딕셔너리입니다.
     # 키와 밸류는 각각 다음을 의미합니다:
     # 키: 레이어의 이름 (예: 'apn.fc1.weight', 'apn.fc2.bias')
