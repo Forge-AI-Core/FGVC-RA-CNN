@@ -168,8 +168,8 @@ def main(dataset_name: str):
 
 
 if __name__ == "__main__":
-    dataset_name = input("데이터셋 이름을 입력해주세요(FGVC-Aircraft / Stanford-Cars / CUB-200-2011): ").strip()
-    if dataset_name not in ["FGVC-Aircraft", "Stanford-Cars", "CUB-200-2011"]:
+    dataset_name = input("데이터셋 이름을 입력해주세요(FGVC-Aircraft / Stanford-Cars / CUB-200-2011 / Iron-Scraps): ").strip()
+    if dataset_name not in ["FGVC-Aircraft", "Stanford-Cars", "CUB-200-2011", "Iron-Scraps"]:
         raise ValueError("잘못된 데이터셋 이름입니다. 다시 입력해주세요.")
 
     main(dataset_name=dataset_name)

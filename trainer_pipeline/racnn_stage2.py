@@ -107,10 +107,10 @@ def train_stage2(model: nn.Module, train_loader: DataLoader, optimizer: optim.Op
         
 
 #####################
-# Stage2의 테스트 코드
+# Stage2의 검증 코드
 #####################
-def test_stage2(model: nn.Module, test_loader: DataLoader, criterion: nn.Module, device: str) -> float:
-    """stage2의 테스트 코드"""
+def val_stage2(model: nn.Module, val_loader: DataLoader, criterion: nn.Module, device: str) -> float:
+    """stage2의 검증 코드"""
     model.eval()
 
     running_loss = 0.0
@@ -119,7 +119,7 @@ def test_stage2(model: nn.Module, test_loader: DataLoader, criterion: nn.Module,
     total = 0
     # with torch.no_grad(): 가장 외곽에 위치
     with torch.no_grad():
-        progress_bar = tqdm(iterable=test_loader, desc="TEST")
+        progress_bar = tqdm(iterable=val_loader, desc="VAL")
         for index, batch in enumerate(progress_bar):
             images = batch["image"].to(device)
             labels = batch["label"].to(device)
@@ -183,7 +183,7 @@ def get_apn1(dataset_name: str, hyperparameter_path: Path) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # 데이터
-    train_loader, test_loader, _ = get_dataloaders(dataset_name=dataset_name, batch_size=batch_size)
+    train_loader, val_loader, _ = get_dataloaders(dataset_name=dataset_name, batch_size=batch_size)
     num_classes = get_num_classes(dataset_name=dataset_name)
 
     # 모듈    
@@ -207,9 +207,9 @@ def get_apn1(dataset_name: str, hyperparameter_path: Path) -> None:
         print(f"Current Learning Rate: {current_lr:.2e}")
         print(f"Epoch: {epoch+1}/{num_epochs}")
 
-        # 학습과 테스트
+        # 학습과 검증
         train_stage2(model, train_loader, optimizer, device)
-        acc2 = test_stage2(model, test_loader, criterion, device)
+        acc2 = val_stage2(model, val_loader, criterion, device)
 
         # 스케줄러의 스텝은 모델 내부가 아닌 루프 내부에서 수행
         scheduler.step()
@@ -233,7 +233,7 @@ def get_apn1(dataset_name: str, hyperparameter_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Options: CUB-200-2011, FGVC-Aircraft, Stanford-Cars")
+    parser = argparse.ArgumentParser(description="Options: CUB-200-2011, FGVC-Aircraft, Stanford-Cars, Iron-Scraps")
     parser.add_argument("--dataset", type=str, required=True, help="데이터셋 이름을 입력하세요.")
     parser.add_argument("--hyperparameter", type=str, default="hyper-parameters.yaml", help="YAML파일 경로")
     args = parser.parse_args()

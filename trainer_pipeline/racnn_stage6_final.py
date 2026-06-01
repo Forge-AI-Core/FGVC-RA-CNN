@@ -154,15 +154,15 @@ def train_stage6(model: nn.Module, train_loader: DataLoader, criterion: nn.Modul
 
 
 #####################
-# Stage6의 테스트 코드
+# Stage6의 검증 코드
 #####################
-def test_stage6(
+def val_stage6(
     model: nn.Module,
-    test_loader: DataLoader,
+    val_loader: DataLoader,
     criterion: nn.Module,
     device: str,
 ) -> tuple[float, float, float, float, float]:
-    """stage6의 테스트 코드 (상세 지표 및 손실 반환)"""
+    """stage6의 검증 코드 (상세 지표 및 손실 반환)"""
     model.eval()
 
     running_loss = 0.0
@@ -173,7 +173,7 @@ def test_stage6(
 
     # with torch.no_grad(): 가장 외곽에 위치
     with torch.no_grad():
-        progress_bar = tqdm(iterable=test_loader, desc="TEST")
+        progress_bar = tqdm(iterable=val_loader, desc="VAL")
         for index, batch in enumerate(progress_bar):
             images = batch["image"].to(device)
             labels = batch["label"].to(device)
@@ -225,11 +225,11 @@ def visualize_results(history: dict[str, list[float]], dataset_name: str) -> Non
     plt.figure(figsize=(15, 10))
     plt.suptitle(f"RA-CNN Stage 6 Training Results ({dataset_name})", fontsize=16)
 
-    # 1. Loss (Train & Test)
+    # 1. Loss (Train & Val)
     plt.subplot(2, 2, 1)
     plt.plot(epochs, history["train_loss"], label="Train Loss", marker='o')
-    plt.plot(epochs, history["test_loss"], label="Test Loss", marker='x')
-    plt.title("Training & Testing Loss")
+    plt.plot(epochs, history["val_loss"], label="Val Loss", marker='x')
+    plt.title("Training & Validation Loss")
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend()
@@ -237,8 +237,8 @@ def visualize_results(history: dict[str, list[float]], dataset_name: str) -> Non
 
     # 2. Accuracy (Ensemble)
     plt.subplot(2, 2, 2)
-    plt.plot(epochs, history["test_acc"], color='green', label="Ensemble Acc", marker='s')
-    plt.title("Ensemble Accuracy (Test)")
+    plt.plot(epochs, history["val_acc"], color='green', label="Ensemble Acc", marker='s')
+    plt.title("Ensemble Accuracy (Val)")
     plt.xlabel("Epochs")
     plt.ylabel("Accuracy (%)")
     plt.legend()
@@ -246,8 +246,8 @@ def visualize_results(history: dict[str, list[float]], dataset_name: str) -> Non
 
     # 3. F1 Score
     plt.subplot(2, 2, 3)
-    plt.plot(epochs, history["test_f1"], color='red', label="F1 Score", marker='d')
-    plt.title("F1 Score (Test)")
+    plt.plot(epochs, history["val_f1"], color='red', label="F1 Score", marker='d')
+    plt.title("F1 Score (Val)")
     plt.xlabel("Epochs")
     plt.ylabel("F1 Score")
     plt.legend()
@@ -255,9 +255,9 @@ def visualize_results(history: dict[str, list[float]], dataset_name: str) -> Non
 
     # 4. Precision & Recall
     plt.subplot(2, 2, 4)
-    plt.plot(epochs, history["test_precision"], label="Precision", marker='^')
-    plt.plot(epochs, history["test_recall"], label="Recall", marker='v')
-    plt.title("Precision & Recall (Test)")
+    plt.plot(epochs, history["val_precision"], label="Precision", marker='^')
+    plt.plot(epochs, history["val_recall"], label="Recall", marker='v')
+    plt.title("Precision & Recall (Val)")
     plt.xlabel("Epochs")
     plt.ylabel("Score")
     plt.legend()
@@ -286,6 +286,7 @@ def load_hyper_parameters(hyperparameter_path: Path) -> dict[str, Any]:
     return hyperparameters
         
 
+
 ##########################
 # 최종 통합 모델을 얻는 함수
 ##########################
@@ -303,7 +304,7 @@ def get_racnn(dataset_name: str, hyperparameter_path: Path) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # 데이터
-    train_loader, test_loader, _ = get_dataloaders(dataset_name=dataset_name, batch_size=batch_size)
+    train_loader, val_loader, _ = get_dataloaders(dataset_name=dataset_name, batch_size=batch_size)
     num_classes = get_num_classes(dataset_name=dataset_name)
     
     # 모듈
@@ -327,11 +328,11 @@ def get_racnn(dataset_name: str, hyperparameter_path: Path) -> None:
     # 기록용 딕셔너리
     history = {
         "train_loss": [],
-        "test_loss": [],
-        "test_acc": [],
-        "test_precision": [],
-        "test_recall": [],
-        "test_f1": []
+        "val_loss": [],
+        "val_acc": [],
+        "val_precision": [],
+        "val_recall": [],
+        "val_f1": []
     }
 
     # 루프 정의
@@ -345,17 +346,17 @@ def get_racnn(dataset_name: str, hyperparameter_path: Path) -> None:
         print(f"Current Learning Rate: {current_lr:.2e}")
         print(f"Epoch: {epoch+1}/{num_epochs}")
 
-        # 학습과 테스트
+        # 학습과 검증
         train_loss = train_stage6(model, train_loader, criterion, optimizer, device)
-        test_loss, acc_ens, precision, recall, f1 = test_stage6(model, test_loader, criterion, device)
+        val_loss, acc_ens, precision, recall, f1 = val_stage6(model, val_loader, criterion, device)
 
         # 기록 저장
         history["train_loss"].append(train_loss)
-        history["test_loss"].append(test_loss)
-        history["test_acc"].append(acc_ens)
-        history["test_precision"].append(precision)
-        history["test_recall"].append(recall)
-        history["test_f1"].append(f1)
+        history["val_loss"].append(val_loss)
+        history["val_acc"].append(acc_ens)
+        history["val_precision"].append(precision)
+        history["val_recall"].append(recall)
+        history["val_f1"].append(f1)
 
         # 스케줄러의 스텝은 모델 내부가 아닌 루프 내부에서 수행
         scheduler.step()
@@ -382,7 +383,7 @@ def get_racnn(dataset_name: str, hyperparameter_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Options: CUB-200-2011, FGVC-Aircraft, Stanford-Cars")
+    parser = argparse.ArgumentParser(description="Options: CUB-200-2011, FGVC-Aircraft, Stanford-Cars, Iron-Scraps")
     parser.add_argument("--dataset", type=str, required=True, help="데이터셋 이름을 입력하세요.")
     parser.add_argument("--hyperparameter", type=str, default="hyper-parameters.yaml", help="YAML파일 경로")
     args = parser.parse_args()

@@ -3,7 +3,7 @@ from time import sleep
 
 
 if __name__ == "__main__":
-    dataset_name = input("Enter dataset name (options: CUB-200-2011, FGVC-Aircraft, Stanford-Cars): ").strip()
+    dataset_name = input("Enter dataset name (options: CUB-200-2011, FGVC-Aircraft, Stanford-Cars, Iron-Scraps): ").strip()
     
     # 실행할 스크립트 경로 목록 정의
     stages = [
