@@ -81,8 +81,7 @@ class Cub_200_2011_Dataset:
     def set_transform(self) -> Tuple[Callable, Callable]:
         train_transform = transforms.Compose(
             [
-                transforms.Resize(size=(448, 448)),
-                transforms.RandomCrop(size=336),
+                transforms.Resize(size=(224, 224)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(
@@ -92,8 +91,7 @@ class Cub_200_2011_Dataset:
         )
         val_transform = transforms.Compose(
             [
-                transforms.Resize(size=(448, 448)),
-                transforms.CenterCrop(size=336),
+                transforms.Resize(size=(224, 224)),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -282,8 +280,7 @@ def get_dataloaders(
     elif dataset_name == "FGVC-Aircraft":
         train_transform = transforms.Compose(
             [
-                transforms.Resize(size=(448, 448)),
-                transforms.RandomCrop(size=336),
+                transforms.Resize(size=(224, 224)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(
@@ -293,8 +290,7 @@ def get_dataloaders(
         )
         val_transform = transforms.Compose(
             [
-                transforms.Resize(size=(448, 448)),
-                transforms.CenterCrop(size=336),
+                transforms.Resize(size=(224, 224)),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -307,8 +303,7 @@ def get_dataloaders(
     elif dataset_name == "Stanford-Cars":
         train_transform = transforms.Compose(
             [
-                transforms.Resize(size=(448, 448)),
-                transforms.RandomCrop(size=336),
+                transforms.Resize(size=(224, 224)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(
@@ -318,8 +313,7 @@ def get_dataloaders(
         )
         val_transform = transforms.Compose(
             [
-                transforms.Resize(size=(448, 448)),
-                transforms.CenterCrop(size=336),
+                transforms.Resize(size=(224, 224)),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -349,20 +343,20 @@ def get_dataloaders(
         dataset=train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=0,
+        num_workers=2,
         pin_memory=True,
     )
     val_loader = DataLoader(
         dataset=val_dataset,
         batch_size=batch_size,
-        num_workers=0,
+        num_workers=2,
         pin_memory=True,
     )
     val_loader_shuffle = DataLoader(
         dataset=val_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=0,
+        num_workers=2,
         pin_memory=True,
     )
 

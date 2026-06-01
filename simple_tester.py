@@ -24,8 +24,8 @@ class FinalModel(nn.Module):
         classifier1 = VanillaCNN(num_classes=num_classes)
         classifier2 = VanillaCNN(num_classes=num_classes)
         classifier3 = VanillaCNN(num_classes=num_classes)
-        apn1 = APN(in_features=512 * 10 * 10)
-        apn2 = APN(in_features=512 * 10 * 10)
+        apn1 = APN(in_features=512 * 7 * 7)
+        apn2 = APN(in_features=512 * 7 * 7)
 
         # 이 5개를 조립하여 빈 RACNN 구조체를 만듭니다.
         self.racnn = RACNN(classifier1, classifier2, classifier3, apn1, apn2)
