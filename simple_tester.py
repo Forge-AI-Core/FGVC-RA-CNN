@@ -12,6 +12,7 @@ from trainer_pipeline.model_base_architectures.apn import APN
 from trainer_pipeline.model_base_architectures.ra_cnn import RACNN
 from trainer_pipeline.data_loaders import get_dataloaders, get_num_classes
 from trainer_pipeline.metrics import evaluate_and_save_metrics
+from trainer_pipeline.gradcam import visualize_and_save_gradcam_comparison
 
 
 class FinalModel(nn.Module):
@@ -142,22 +143,42 @@ def main(dataset_name: str):
         print(f"{i+1:<5} | {gt:<8} | {pred:<10} | {is_correct:<5}")
     print("-" * 50)
     print(
-        "📸 이미지가 저장되었습니다: scale1_full.png / scale2_crop.png / scale3_crop.png"
+        "📸 이미지가 저장되었습니다: scale1_full.png / scale2_crop.png / scale3_crop.png / gradcam_comparison.png"
     )
     print("=" * 50 + "\n")
 
     # 저장용 결과 디렉토리 생성
-    Path(f"results/{dataset_name}").mkdir(parents=True, exist_ok=True)
+    results_dir = Path(f"results/{dataset_name}")
+    results_dir.mkdir(parents=True, exist_ok=True)
 
     # Tensor를 실제 이미지 파일(.png)로 저장하여 눈으로 확인
     vutils.save_image(
-        images, f"results/{dataset_name}/scale1_full.png", normalize=True, nrow=5
+        images, results_dir / "scale1_full.png", normalize=True, nrow=5
     )
     vutils.save_image(
-        crop1, f"results/{dataset_name}/scale2_crop.png", normalize=True, nrow=5
+        crop1, results_dir / "scale2_crop.png", normalize=True, nrow=5
     )
     vutils.save_image(
-        crop2, f"results/{dataset_name}/scale3_crop.png", normalize=True, nrow=5
+        crop2, results_dir / "scale3_crop.png", normalize=True, nrow=5
+    )
+
+    # Grad-CAM++ 시각화 생성 및 대시보드 저장
+    print("Grad-CAM++ 히트맵 분석 및 대시보드 이미지를 생성하는 중...")
+    if hasattr(test_loader_shuffle.dataset, "classes"):
+        class_names = test_loader_shuffle.dataset.classes
+    else:
+        class_names = [f"Class {i}" for i in range(num_classes)]
+
+    visualize_and_save_gradcam_comparison(
+        dataset_name=dataset_name,
+        images=images,
+        crop1=crop1,
+        crop2=crop2,
+        predictions=predictions,
+        labels=labels,
+        class_names=class_names,
+        model=model,
+        device=device,
     )
 
 
