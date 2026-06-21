@@ -9,10 +9,10 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from sklearn.metrics import precision_score, recall_score, f1_score
 
-from trainer_pipeline.data_loaders import get_dataloaders, get_num_classes
+from trainer_pipeline.data_loaders import get_dataloaders, get_num_classes, get_test_dataloader
 from trainer_pipeline.model_base_architectures.apn import rank_loss
 from trainer_pipeline.model_base_architectures.ra_cnn import RACNN, prepare_modules
-from trainer_pipeline.metrics import visualize_results, evaluate_and_save_metrics
+from trainer_pipeline.metrics import visualize_results, evaluate_and_save_metrics, evaluate_with_custom_threshold
 
 
 #######################################################################################
@@ -309,6 +309,20 @@ def get_racnn(dataset_name: str, hyperparameter_path: Path) -> None:
             num_classes=num_classes,
             prefix="val",
         )
+        
+        # 새로운 threshold 적용하여 test set을 평가
+        print("\n[평가] Custom Threshold를 적용한 Test 셋 평가를 진행합니다...")
+        if dataset_name == "Iron-Scraps":
+            test_loader = get_test_dataloader(dataset_name=dataset_name, batch_size=batch_size)
+            evaluate_with_custom_threshold(
+                model=model,
+                val_loader=val_loader,
+                test_loader=test_loader,
+                device=device,
+                dataset_name=dataset_name,
+                danger_class_idx=1,
+                target_recall=0.9
+            )
 
 
 if __name__ == "__main__":

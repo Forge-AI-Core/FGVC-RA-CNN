@@ -37,10 +37,13 @@ CARS_TRAIN_IMAGES_DIR = Path("data/benchmark-3/Stanford-Cars/cars_train/cars_tra
 CARS_TEST_IMAGES_DIR = Path("data/benchmark-3/Stanford-Cars/cars_test/cars_test")
 # BogoNet-Iron-Scraps
 IRON_SCRAPS_TRAIN_DATASET_DIR = Path(
-    "data/Iron-Scraps/my_classification/vanilla/split_dataset_25pct/train"
+    "data/Iron-Scraps/set_with_testset/team_share/split_dataset_0pct/train"
 )
 IRON_SCRAPS_VAL_DATASET_DIR = Path(
-    "data/Iron-Scraps/my_classification/vanilla/split_dataset_25pct/val"
+    "data/Iron-Scraps/set_with_testset/team_share/split_dataset_0pct/val"
+)
+IRON_SCRAPS_TEST_DATASET_DIR = Path(
+    "data/Iron-Scraps/set_with_testset/team_share/split_dataset_0pct/test"
 )
 
 
@@ -381,3 +384,32 @@ def get_num_classes(dataset_name: str) -> int:
         raise ValueError(f"Unsupported dataset name: {dataset_name}")
 
     return dataset_map[dataset_name]
+
+
+def get_test_dataloader(
+    dataset_name: str, batch_size: int = 16
+) -> DataLoader:
+    """테스트용 데이터로더를 반환합니다."""
+    if dataset_name == "Iron-Scraps":
+        test_transform = transforms.Compose(
+            [
+                transforms.Resize(size=(224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        )
+        test_dataset = DictImageFolder(
+            root=IRON_SCRAPS_TEST_DATASET_DIR,
+            transform=test_transform,
+        )
+        test_loader = DataLoader(
+            dataset=test_dataset,
+            batch_size=batch_size,
+            num_workers=2,
+            pin_memory=True,
+        )
+        print(f"테스트용 데이터 샘플 수: {len(test_dataset)}")
+        print(f"테스트용 배치 수: {len(test_loader)}")
+        return test_loader
+    else:
+        raise NotImplementedError(f"Test dataloader not implemented for {dataset_name}")
