@@ -3,7 +3,7 @@ name = "eye-openning"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "==3.12.11"
 dependencies = [
     "datasets>=4.8.5",
     "kagglehub>=1.0.1",
@@ -14,26 +14,24 @@ dependencies = [
     "scipy>=1.17.1",
     "termcolor>=3.3.0",
     "timm>=1.0.27",
-    "torch>=2.4.0,<2.5.0",
-    "torchaudio>=2.4.0,<2.5.0",
+    "torch>=2.8.0",         # 버전 대폭 상향
+    "torchaudio>=2.8.0",    # 버전 대폭 상향
     "torchmetrics>=1.9.0",
-    "torchvision>=0.19.0,<0.20.0",
+    "torchvision>=0.23.0",  # 버전 대폭 상향
 ]
 
 [[tool.uv.index]]
-name = "pytorch-cu118"
-url = "https://download.pytorch.org/whl/cu118"
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
 [tool.uv.sources]
-torch = [
-    { index = "pytorch-cu118", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
+torch = { path = "/workspace/torch-2.11.0+cu128-cp312-cp312-linux_x86_64.whl" }
 torchvision = [
-    { index = "pytorch-cu118", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 torchaudio = [
-    { index = "pytorch-cu118", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 
 [tool.pyright]

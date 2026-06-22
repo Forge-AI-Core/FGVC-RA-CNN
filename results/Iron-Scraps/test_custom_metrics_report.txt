@@ -1,0 +1,18 @@
+============================================================
+ 데이터셋: Iron-Scraps (Custom Threshold Evaluation)
+ Target Danger Recall: 0.9
+============================================================
+
+--- Validation Set Metrics (Threshold: 0.0479) ---
+Accuracy:        0.6269
+Danger Recall:   0.9000
+Danger Precision:0.4630
+Danger MCC:      0.4323
+Danger PR AUC:   0.7089
+
+--- Test Set Metrics (Threshold: 0.0479) ---
+Accuracy:        0.6748
+Danger Recall:   0.8120
+Danger Precision:0.8000
+Danger MCC:      -0.0904
+Danger PR AUC:   0.8203
